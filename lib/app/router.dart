@@ -20,35 +20,42 @@ GoRouter createAppRouter() {
         routes: [
           GoRoute(
             path: '/today',
-            builder: (context, state) => const TodayScreen(),
+            pageBuilder: (context, state) =>
+                _shellPage(state, const TodayScreen()),
           ),
           GoRoute(
             path: '/calendar',
-            builder: (context, state) => const CalendarScreen(),
+            pageBuilder: (context, state) =>
+                _shellPage(state, const CalendarScreen()),
           ),
           GoRoute(
             path: '/pomodoro',
-            builder: (context, state) => const PomodoroScreen(),
+            pageBuilder: (context, state) =>
+                _shellPage(state, const PomodoroScreen()),
           ),
           GoRoute(
             path: '/projects',
-            builder: (context, state) => const ProjectsScreen(),
+            pageBuilder: (context, state) =>
+                _shellPage(state, const ProjectsScreen()),
             routes: [
               GoRoute(
                 path: ':projectId',
-                builder: (context, state) => ProjectsScreen(
-                  projectId: state.pathParameters['projectId'],
+                pageBuilder: (context, state) => _shellPage(
+                  state,
+                  ProjectsScreen(projectId: state.pathParameters['projectId']),
                 ),
               ),
             ],
           ),
           GoRoute(
             path: '/stats',
-            builder: (context, state) => const StatsScreen(),
+            pageBuilder: (context, state) =>
+                _shellPage(state, const StatsScreen()),
           ),
           GoRoute(
             path: '/settings',
-            builder: (context, state) => const SettingsScreen(),
+            pageBuilder: (context, state) =>
+                _shellPage(state, const SettingsScreen()),
           ),
         ],
       ),
@@ -56,4 +63,8 @@ GoRouter createAppRouter() {
     errorBuilder: (context, state) =>
         Scaffold(body: Center(child: Text('找不到頁面：${state.uri}'))),
   );
+}
+
+Page<void> _shellPage(GoRouterState state, Widget child) {
+  return NoTransitionPage<void>(key: state.pageKey, child: child);
 }
