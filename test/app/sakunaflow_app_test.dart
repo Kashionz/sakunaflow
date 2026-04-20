@@ -25,7 +25,7 @@ void main() {
 
     expect(find.text('SakunaFlow'), findsWidgets);
     expect(find.text('今日'), findsWidgets);
-    expect(find.text('實作 SyncService push 機制'), findsOneWidget);
+    expect(find.text('2026年4月20日'), findsOneWidget);
     expect(find.text('修復番茄鐘背景計時 bug'), findsOneWidget);
 
     await tester.tap(find.text('番茄鐘').first);
@@ -39,6 +39,27 @@ void main() {
 
     expect(find.text('個人網站 v3'), findsWidgets);
     expect(find.text('HomeServer'), findsWidgets);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('tab navigation swaps destinations without transitional overlap', (
+    tester,
+  ) async {
+    await tester.pumpWidget(SakunaFlowApp(database: database, now: today));
+    await tester.pumpAndSettle();
+
+    expect(find.text('2026年4月20日'), findsOneWidget);
+
+    await tester.tap(find.text('番茄鐘').first);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('25:00'), findsOneWidget);
+    expect(find.text('2026年4月20日'), findsNothing);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();
