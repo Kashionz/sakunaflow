@@ -14,7 +14,7 @@ class TaskItem extends StatelessWidget {
 
   final Task task;
   final List<Project> projects;
-  final ValueChanged<bool> onToggleDone;
+  final Future<void> Function(bool done) onToggleDone;
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +47,11 @@ class TaskItem extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _TaskCheckbox(done: done, onChanged: onToggleDone),
+              _TaskCheckbox(
+                key: ValueKey('task-checkbox-${task.id}'),
+                done: done,
+                onChanged: onToggleDone,
+              ),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
@@ -115,31 +119,82 @@ class TaskItem extends StatelessWidget {
   }
 }
 
-class _TaskCheckbox extends StatelessWidget {
-  const _TaskCheckbox({required this.done, required this.onChanged});
+class _TaskCheckbox extends StatefulWidget {
+  const _TaskCheckbox({super.key, required this.done, required this.onChanged});
 
   final bool done;
-  final ValueChanged<bool> onChanged;
+  final Future<void> Function(bool done) onChanged;
+
+  @override
+  State<_TaskCheckbox> createState() => _TaskCheckboxState();
+}
+
+class _TaskCheckboxState extends State<_TaskCheckbox> {
+  late bool _checked = widget.done;
+
+  @override
+  void didUpdateWidget(covariant _TaskCheckbox oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.done != oldWidget.done && widget.done != _checked) {
+      _checked = widget.done;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
       borderRadius: BorderRadius.circular(999),
-      onTap: () => onChanged(!done),
-      child: Container(
+      onTap: () async {
+        final previous = _checked;
+        final next = !_checked;
+        setState(() => _checked = next);
+        try {
+          await widget.onChanged(next);
+        } catch (_) {
+          if (mounted) {
+            setState(() => _checked = previous);
+          }
+          rethrow;
+        }
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOutCubic,
         width: 20,
         height: 20,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: done ? AppColors.accent : Colors.transparent,
+          color: _checked ? AppColors.accent : Colors.transparent,
           shape: BoxShape.circle,
-          border: done
-              ? null
-              : Border.all(color: AppColors.mutedText, width: 1.5),
+          border: Border.all(
+            color: _checked ? AppColors.accent : AppColors.mutedText,
+            width: 1.5,
+          ),
         ),
-        child: done
-            ? const Icon(Icons.check, size: 13, color: Colors.white)
-            : null,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 140),
+          reverseDuration: const Duration(milliseconds: 90),
+          switchInCurve: Curves.easeOutBack,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) {
+            return ScaleTransition(
+              scale: animation,
+              child: FadeTransition(opacity: animation, child: child),
+            );
+          },
+          child: _checked
+              ? const Icon(
+                  Icons.check,
+                  key: ValueKey('task-checkbox-checked'),
+                  size: 13,
+                  color: Colors.white,
+                )
+              : const SizedBox(
+                  key: ValueKey('task-checkbox-unchecked'),
+                  width: 13,
+                  height: 13,
+                ),
+        ),
       ),
     );
   }

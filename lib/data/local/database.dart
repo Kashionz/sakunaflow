@@ -634,14 +634,19 @@ class AppDatabase extends _$AppDatabase {
     final endOfToday = DateTime(now.year, now.month, now.day, 23, 59, 59, 999);
     return items
         .where((task) {
-          if (task.status == TaskStatus.done.name ||
-              task.status == TaskStatus.archived.name) {
+          if (task.status == TaskStatus.archived.name) {
             return false;
           }
           final due = task.dueDate;
+          final completedAt = task.completedAt;
           return task.status == TaskStatus.inProgress.name ||
-              (due != null && !due.isAfter(endOfToday));
+              (due != null && !due.isAfter(endOfToday)) ||
+              (completedAt != null && _isSameDay(completedAt, now));
         })
         .toList(growable: false);
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 }

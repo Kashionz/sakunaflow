@@ -112,6 +112,9 @@ class _TodayContent extends StatelessWidget {
     final todo = tasks
         .where((task) => task.status == TaskStatus.todo.name)
         .toList();
+    final done = tasks
+        .where((task) => task.status == TaskStatus.done.name)
+        .toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(36, 28, 36, 48),
@@ -135,12 +138,7 @@ class _TodayContent extends StatelessWidget {
             const SizedBox(width: 10),
             _StatCard(value: inProgress.length, label: '進行中'),
             const SizedBox(width: 10),
-            _StatCard(
-              value: tasks
-                  .where((task) => task.status == TaskStatus.done.name)
-                  .length,
-              label: '今日完成',
-            ),
+            _StatCard(value: done.length, label: '今日完成'),
           ],
         ),
         if (inProgress.isNotEmpty) ...[
@@ -160,7 +158,7 @@ class _TodayContent extends StatelessWidget {
           actionLabel: '新增',
           onAction: onStartAdd,
         ),
-        if (todo.isEmpty && !adding)
+        if (todo.isEmpty && done.isEmpty && !adding)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 24),
             child: Center(
@@ -171,7 +169,7 @@ class _TodayContent extends StatelessWidget {
             ),
           )
         else
-          for (final task in todo)
+          for (final task in [...todo, ...done])
             TaskItem(
               task: task,
               projects: projects,

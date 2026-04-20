@@ -58,7 +58,7 @@ void main() {
   );
 
   test(
-    'completing a task records completedAt and hides it from today',
+    'completing a today task records completedAt and keeps it in today',
     () async {
       final task = await database.createTask(
         title: '完成 Drift schema migration',
@@ -76,7 +76,7 @@ void main() {
 
       expect(updated.status, TaskStatus.done.name);
       expect(updated.completedAt, frozenNow.add(const Duration(hours: 1)));
-      expect(todayTasks.map((task) => task.id), isNot(contains(task.id)));
+      expect(todayTasks.map((task) => task.id), contains(task.id));
     },
   );
 

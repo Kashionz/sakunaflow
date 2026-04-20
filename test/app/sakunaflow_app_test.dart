@@ -68,4 +68,26 @@ void main() {
     await tester.pump(const Duration(milliseconds: 1));
     await tester.pump(const Duration(seconds: 1));
   });
+
+  testWidgets('completed today tasks stay visible with strikethrough', (
+    tester,
+  ) async {
+    await tester.pumpWidget(SakunaFlowApp(database: database, now: today));
+    await tester.pumpAndSettle();
+
+    final taskTitle = find.text('設計 CalendarScreen UI');
+    expect(taskTitle, findsOneWidget);
+
+    await tester.tapAt(tester.getTopLeft(taskTitle) + const Offset(-20, 8));
+    await tester.pumpAndSettle();
+
+    expect(taskTitle, findsOneWidget);
+    final titleText = tester.widget<Text>(taskTitle);
+    expect(titleText.style?.decoration, TextDecoration.lineThrough);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+  });
 }
