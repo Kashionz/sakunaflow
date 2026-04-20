@@ -39,6 +39,7 @@ migrate_working_dir/
 # Local Codex workspace artifacts
 .codex
 .superpowers/
+.worktrees/
 install_vs_atl.cmd
 
 # Symbolication related
