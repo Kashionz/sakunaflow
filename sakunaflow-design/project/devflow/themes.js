@@ -1,0 +1,51 @@
+// DevFlow — 三種視覺主題
+window.DF_THEMES = {
+  A: {
+    id: 'A', name: 'Notion 溫潤',
+    sidebar: {
+      bg: '#f6f5f4', text: 'rgba(55,53,47,0.6)',
+      activeBg: 'rgba(0,0,0,0.07)', activeText: 'rgba(55,53,47,0.95)',
+      border: 'rgba(0,0,0,0.06)',
+    },
+    bg: '#ffffff', surfaceAlt: '#f6f5f4',
+    text: { primary: 'rgba(55,53,47,0.95)', secondary: '#615d59', muted: '#a39e98' },
+    accent: '#0075de', accentDark: '#005bab',
+    border: 'rgba(0,0,0,0.09)',
+    radius: { sm: 4, md: 8, lg: 12, pill: 9999 },
+    cardShadow: '0 0 0 1px rgba(0,0,0,0.07), 0 2px 8px rgba(0,0,0,0.04)',
+    pomodoroAccent: '#0075de',
+    font: "'Inter','Noto Sans TC',sans-serif",
+  },
+  B: {
+    id: 'B', name: 'Studio 深沉',
+    sidebar: {
+      bg: '#1c1b18', text: 'rgba(255,255,255,0.42)',
+      activeBg: 'rgba(255,255,255,0.09)', activeText: 'rgba(255,255,255,0.95)',
+      border: 'rgba(255,255,255,0.07)',
+    },
+    bg: '#ffffff', surfaceAlt: '#fafaf9',
+    text: { primary: '#111110', secondary: '#6b6b6b', muted: '#ababab' },
+    accent: '#e85d04', accentDark: '#c44f03',
+    border: 'rgba(0,0,0,0.08)',
+    radius: { sm: 6, md: 10, lg: 14, pill: 9999 },
+    cardShadow: '0 1px 3px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.06)',
+    pomodoroAccent: '#e85d04',
+    font: "'Inter','Noto Sans TC',sans-serif",
+  },
+  C: {
+    id: 'C', name: 'Indigo 活潑',
+    sidebar: {
+      bg: '#f0efff', text: '#6360b8',
+      activeBg: '#e0deff', activeText: '#3730a3',
+      border: 'rgba(91,91,214,0.08)',
+    },
+    bg: '#ffffff', surfaceAlt: '#fafafa',
+    text: { primary: '#18181b', secondary: '#52525b', muted: '#a1a1aa' },
+    accent: '#5b5bd6', accentDark: '#4040b8',
+    border: 'rgba(91,91,214,0.12)',
+    radius: { sm: 8, md: 12, lg: 16, pill: 9999 },
+    cardShadow: '0 0 0 1px rgba(91,91,214,0.1), 0 4px 16px rgba(91,91,214,0.07)',
+    pomodoroAccent: '#5b5bd6',
+    font: "'Inter','Noto Sans TC',sans-serif",
+  },
+};
