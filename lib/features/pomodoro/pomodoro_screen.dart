@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../app/theme.dart';
 import '../../data/local/database.dart';
 import '../../shared/providers/database_provider.dart';
+import '../notifications/local_notification_service.dart';
 import 'pomodoro_controller.dart';
 
 class PomodoroScreen extends ConsumerStatefulWidget {
@@ -78,6 +79,7 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> {
   }
 
   Future<void> _recordCompletion(PomodoroCompletion completion) async {
+    final task = await ref.read(databaseProvider).getTask(completion.taskId);
     await ref
         .read(databaseProvider)
         .addPomodoroSession(
@@ -88,6 +90,9 @@ class _PomodoroScreenState extends ConsumerState<PomodoroScreen> {
           type: PomodoroSessionType.work,
           completed: true,
         );
+    await LocalNotificationService.instance.showPomodoroComplete(
+      taskTitle: task.title,
+    );
   }
 }
 
