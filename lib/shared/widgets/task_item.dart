@@ -10,11 +10,13 @@ class TaskItem extends StatelessWidget {
     required this.task,
     required this.projects,
     required this.onToggleDone,
+    this.onEdit,
   });
 
   final Task task;
   final List<Project> projects;
   final Future<void> Function(bool done) onToggleDone;
+  final VoidCallback? onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -97,6 +99,16 @@ class TaskItem extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onEdit != null) ...[
+                IconButton(
+                  key: ValueKey('task-edit-${task.id}'),
+                  tooltip: '編輯任務',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: onEdit,
+                  icon: const Icon(Icons.edit_outlined, size: 18),
+                ),
+                const SizedBox(width: 4),
+              ],
               const SizedBox(width: 8),
               PriorityBadge(priority: task.priority),
             ],

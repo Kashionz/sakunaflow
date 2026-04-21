@@ -73,4 +73,29 @@ void main() {
     expect(toggled, isTrue);
     expect(find.byIcon(Icons.check), findsOneWidget);
   });
+
+  testWidgets('edit button fires without toggling checkbox', (tester) async {
+    var editCount = 0;
+    var toggleCount = 0;
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light(),
+        home: Scaffold(
+          body: TaskItem(
+            task: task(status: TaskStatus.todo),
+            projects: const [],
+            onToggleDone: (_) async => toggleCount++,
+            onEdit: () => editCount++,
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.byKey(const ValueKey('task-edit-task-animation')));
+    await tester.pump();
+
+    expect(editCount, 1);
+    expect(toggleCount, 0);
+  });
 }

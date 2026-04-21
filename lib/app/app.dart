@@ -7,10 +7,11 @@ import 'router.dart';
 import 'theme.dart';
 
 class SakunaFlowApp extends StatelessWidget {
-  const SakunaFlowApp({super.key, this.database, this.now});
+  const SakunaFlowApp({super.key, this.database, this.now, this.childOverride});
 
   final AppDatabase? database;
   final DateTime? now;
+  final Widget? childOverride;
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +20,14 @@ class SakunaFlowApp extends StatelessWidget {
         if (database != null) databaseProvider.overrideWithValue(database!),
         if (now != null) currentDateProvider.overrideWithValue(now!),
       ],
-      child: const _SakunaFlowRoot(),
+      child: childOverride == null
+          ? const _SakunaFlowRoot()
+          : MaterialApp(
+              title: 'SakunaFlow',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light(),
+              home: Scaffold(body: childOverride),
+            ),
     );
   }
 }

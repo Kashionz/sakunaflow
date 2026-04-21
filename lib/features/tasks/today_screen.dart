@@ -6,6 +6,7 @@ import '../../data/local/database.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../shared/widgets/section_header.dart';
 import '../../shared/widgets/task_item.dart';
+import 'task_edit_panel.dart';
 
 class TodayScreen extends ConsumerStatefulWidget {
   const TodayScreen({super.key});
@@ -17,6 +18,7 @@ class TodayScreen extends ConsumerStatefulWidget {
 class _TodayScreenState extends ConsumerState<TodayScreen> {
   final _quickAddController = TextEditingController();
   bool _adding = false;
+  String? _editingTaskId;
 
   @override
   void dispose() {
@@ -32,20 +34,36 @@ class _TodayScreenState extends ConsumerState<TodayScreen> {
 
     return tasks.when(
       data: (items) => projects.when(
-        data: (projectItems) => _TodayContent(
-          today: today,
-          tasks: items,
-          projects: projectItems,
-          adding: _adding,
-          controller: _quickAddController,
-          onStartAdd: () => setState(() => _adding = true),
-          onCancelAdd: () => setState(() {
-            _adding = false;
-            _quickAddController.clear();
-          }),
-          onSubmitAdd: _createQuickTask,
-          onToggleTask: _toggleTask,
-        ),
+        data: (projectItems) {
+          final editingTask = _editingTaskId == null
+              ? null
+              : items.where((task) => task.id == _editingTaskId).firstOrNull;
+          return Stack(
+            children: [
+              _TodayContent(
+                today: today,
+                tasks: items,
+                projects: projectItems,
+                adding: _adding,
+                controller: _quickAddController,
+                onStartAdd: () => setState(() => _adding = true),
+                onCancelAdd: () => setState(() {
+                  _adding = false;
+                  _quickAddController.clear();
+                }),
+                onSubmitAdd: _createQuickTask,
+                onToggleTask: _toggleTask,
+                onEditTask: (task) => setState(() => _editingTaskId = task.id),
+              ),
+              if (editingTask != null)
+                TaskEditPanel(
+                  task: editingTask,
+                  projects: projectItems,
+                  onClose: () => setState(() => _editingTaskId = null),
+                ),
+            ],
+          );
+        },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('專案載入失敗：$error')),
       ),
@@ -92,6 +110,7 @@ class _TodayContent extends StatelessWidget {
     required this.onCancelAdd,
     required this.onSubmitAdd,
     required this.onToggleTask,
+    required this.onEditTask,
   });
 
   final DateTime today;
@@ -103,6 +122,7 @@ class _TodayContent extends StatelessWidget {
   final VoidCallback onCancelAdd;
   final Future<void> Function() onSubmitAdd;
   final Future<void> Function(Task task, bool done) onToggleTask;
+  final void Function(Task task) onEditTask;
 
   @override
   Widget build(BuildContext context) {
@@ -149,6 +169,7 @@ class _TodayContent extends StatelessWidget {
               task: task,
               projects: projects,
               onToggleDone: (done) => onToggleTask(task, done),
+              onEdit: () => onEditTask(task),
             ),
         ],
         const SizedBox(height: 18),
@@ -174,6 +195,7 @@ class _TodayContent extends StatelessWidget {
               task: task,
               projects: projects,
               onToggleDone: (done) => onToggleTask(task, done),
+              onEdit: () => onEditTask(task),
             ),
         const SizedBox(height: 12),
         if (adding)
