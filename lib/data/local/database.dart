@@ -14,6 +14,16 @@ enum TaskStatus { todo, inProgress, done, archived }
 
 enum PomodoroSessionType { work, shortBreak, longBreak }
 
+const projectPalette = [
+  '#8c52ff',
+  '#0075de',
+  '#2a9d99',
+  '#dd5b00',
+  '#d93838',
+  '#2f7d4f',
+  '#888888',
+];
+
 class StringListConverter extends TypeConverter<List<String>, String> {
   const StringListConverter();
 
@@ -359,6 +369,40 @@ class AppDatabase extends _$AppDatabase {
     )..where((project) => project.id.equals(id))).getSingle();
   }
 
+  Future<void> updateProject(
+    String id, {
+    String? name,
+    String? description,
+    String? color,
+    ProjectStatus? status,
+    List<String>? techTags,
+    String? gitUrl,
+    DateTime? now,
+  }) {
+    final stamp = now ?? DateTime.now();
+    return (update(projects)..where((project) => project.id.equals(id))).write(
+      ProjectsCompanion(
+        name: name == null
+            ? const Value.absent()
+            : Value(_requiredTrimmed(name, 'name')),
+        description: description == null
+            ? const Value.absent()
+            : Value(_blankToNull(description)),
+        color: color == null
+            ? const Value.absent()
+            : Value(_validProjectColor(color)),
+        status: status == null ? const Value.absent() : Value(status.name),
+        techTags: techTags == null
+            ? const Value.absent()
+            : Value(_cleanTags(techTags)),
+        gitUrl: gitUrl == null
+            ? const Value.absent()
+            : Value(_blankToNull(gitUrl)),
+        updatedAt: Value(stamp),
+      ),
+    );
+  }
+
   Future<void> updateProjectStatus(
     String id,
     ProjectStatus status, {
@@ -451,6 +495,54 @@ class AppDatabase extends _$AppDatabase {
 
   Future<Task> getTask(String id) {
     return (select(tasks)..where((task) => task.id.equals(id))).getSingle();
+  }
+
+  Future<void> updateTask(
+    String id, {
+    String? title,
+    String? description,
+    String? projectId,
+    String? parentTaskId,
+    int? priority,
+    DateTime? dueDate,
+    int? estimatedPomodoros,
+    List<String>? tags,
+    bool clearProject = false,
+    bool clearDueDate = false,
+    DateTime? now,
+  }) {
+    final stamp = now ?? DateTime.now();
+    return (update(tasks)..where((task) => task.id.equals(id))).write(
+      TasksCompanion(
+        title: title == null
+            ? const Value.absent()
+            : Value(_requiredTrimmed(title, 'title')),
+        description: description == null
+            ? const Value.absent()
+            : Value(_blankToNull(description)),
+        projectId: clearProject
+            ? const Value(null)
+            : projectId == null
+            ? const Value.absent()
+            : Value(projectId),
+        parentTaskId: parentTaskId == null
+            ? const Value.absent()
+            : Value(_blankToNull(parentTaskId)),
+        priority: priority == null
+            ? const Value.absent()
+            : Value(_validPriority(priority)),
+        dueDate: clearDueDate
+            ? const Value(null)
+            : dueDate == null
+            ? const Value.absent()
+            : Value(dueDate),
+        estimatedPomodoros: estimatedPomodoros == null
+            ? const Value.absent()
+            : Value(_nonNegativePomodoros(estimatedPomodoros)),
+        tags: tags == null ? const Value.absent() : Value(_cleanTags(tags)),
+        updatedAt: Value(stamp),
+      ),
+    );
   }
 
   Future<void> updateTaskStatus(
@@ -627,6 +719,47 @@ class AppDatabase extends _$AppDatabase {
   String? _blankToNull(String? value) {
     final trimmed = value?.trim();
     if (trimmed == null || trimmed.isEmpty) return null;
+    return trimmed;
+  }
+
+  String _requiredTrimmed(String value, String fieldName) {
+    final trimmed = value.trim();
+    if (trimmed.isEmpty) {
+      throw ArgumentError.value(value, fieldName, 'must not be blank');
+    }
+    return trimmed;
+  }
+
+  List<String> _cleanTags(List<String> values) {
+    return values
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList(growable: false);
+  }
+
+  int _validPriority(int value) {
+    if (value < 0 || value > 3) {
+      throw ArgumentError.value(value, 'priority', 'must be between 0 and 3');
+    }
+    return value;
+  }
+
+  int _nonNegativePomodoros(int value) {
+    if (value < 0) {
+      throw ArgumentError.value(
+        value,
+        'estimatedPomodoros',
+        'must not be negative',
+      );
+    }
+    return value;
+  }
+
+  String _validProjectColor(String value) {
+    final trimmed = value.trim().toLowerCase();
+    if (!projectPalette.contains(trimmed)) {
+      throw ArgumentError.value(value, 'color', 'must be in projectPalette');
+    }
     return trimmed;
   }
 

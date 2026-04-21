@@ -46,26 +46,27 @@ void main() {
     await tester.pump(const Duration(seconds: 1));
   });
 
-  testWidgets('tab navigation swaps destinations without transitional overlap', (
-    tester,
-  ) async {
-    await tester.pumpWidget(SakunaFlowApp(database: database, now: today));
-    await tester.pumpAndSettle();
+  testWidgets(
+    'tab navigation swaps destinations without transitional overlap',
+    (tester) async {
+      await tester.pumpWidget(SakunaFlowApp(database: database, now: today));
+      await tester.pumpAndSettle();
 
-    expect(find.text('2026年4月20日'), findsOneWidget);
+      expect(find.text('2026年4月20日'), findsOneWidget);
 
-    await tester.tap(find.text('番茄鐘').first);
-    await tester.pump();
-    await tester.pump();
+      await tester.tap(find.text('番茄鐘').first);
+      await tester.pump();
+      await tester.pump();
 
-    expect(find.text('25:00'), findsOneWidget);
-    expect(find.text('2026年4月20日'), findsNothing);
+      expect(find.text('25:00'), findsOneWidget);
+      expect(find.text('2026年4月20日'), findsNothing);
 
-    await tester.pumpWidget(const SizedBox.shrink());
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1));
-    await tester.pump(const Duration(seconds: 1));
-  });
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 1));
+      await tester.pump(const Duration(seconds: 1));
+    },
+  );
 
   testWidgets('quick add creates a task in the local database', (tester) async {
     await tester.pumpWidget(SakunaFlowApp(database: database, now: today));
@@ -81,7 +82,9 @@ void main() {
     await tester.pump();
 
     expect(find.text('整理 Phase 1 驗收清單'), findsOneWidget);
-    final todayTasks = await database.getTodayTasks(today);
+    final todayTasks = (await tester.runAsync(
+      () => database.getTodayTasks(today),
+    ))!;
     expect(todayTasks.map((task) => task.title), contains('整理 Phase 1 驗收清單'));
 
     await tester.pumpWidget(const SizedBox.shrink());
@@ -105,6 +108,66 @@ void main() {
     expect(taskTitle, findsOneWidget);
     final titleText = tester.widget<Text>(taskTitle);
     expect(titleText.style?.decoration, TextDecoration.lineThrough);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('edits a today task from the edit panel', (tester) async {
+    await tester.pumpWidget(SakunaFlowApp(database: database, now: today));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('task-edit-task-calendar-ui')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('編輯任務'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('task-edit-title')),
+      '更新 CalendarScreen UI',
+    );
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+
+    final task = (await tester.runAsync(
+      () => database.getTask('task-calendar-ui'),
+    ))!;
+    expect(task.title, '更新 CalendarScreen UI');
+    expect(find.text('更新 CalendarScreen UI'), findsWidgets);
+
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1));
+    await tester.pump(const Duration(seconds: 1));
+  });
+
+  testWidgets('edits a project from the projects list', (tester) async {
+    await tester.pumpWidget(SakunaFlowApp(database: database, now: today));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('專案').first);
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('project-edit-project-sakunaflow')),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('編輯專案'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const ValueKey('project-edit-name')),
+      'SakunaFlow Local',
+    );
+    await tester.pump(const Duration(milliseconds: 600));
+    await tester.pumpAndSettle();
+
+    final project = (await tester.runAsync(
+      () => database.getProject('project-sakunaflow'),
+    ))!;
+    expect(project.name, 'SakunaFlow Local');
+    expect(find.text('SakunaFlow Local'), findsWidgets);
 
     await tester.pumpWidget(const SizedBox.shrink());
     await tester.pump();

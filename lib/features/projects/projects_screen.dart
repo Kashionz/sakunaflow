@@ -6,34 +6,80 @@ import '../../data/local/database.dart';
 import '../../shared/providers/database_provider.dart';
 import '../../shared/widgets/section_header.dart';
 import '../../shared/widgets/task_item.dart';
+import '../tasks/task_edit_panel.dart';
+import 'project_edit_panel.dart';
 
-class ProjectsScreen extends ConsumerWidget {
+class ProjectsScreen extends ConsumerStatefulWidget {
   const ProjectsScreen({super.key, this.projectId});
 
   final String? projectId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProjectsScreen> createState() => _ProjectsScreenState();
+}
+
+class _ProjectsScreenState extends ConsumerState<ProjectsScreen> {
+  String? _editingProjectId;
+  String? _editingTaskId;
+
+  @override
+  Widget build(BuildContext context) {
     final projects = ref.watch(projectsProvider);
     final tasks = ref.watch(tasksProvider);
 
     return projects.when(
       data: (items) => tasks.when(
         data: (taskItems) {
-          if (projectId != null) {
+          final editingProject = _editingProjectId == null
+              ? null
+              : items.where((item) => item.id == _editingProjectId).firstOrNull;
+          final editingTask = _editingTaskId == null
+              ? null
+              : taskItems
+                    .where((task) => task.id == _editingTaskId)
+                    .firstOrNull;
+
+          Widget content;
+          if (widget.projectId != null) {
             final project = items
-                .where((item) => item.id == projectId)
+                .where((item) => item.id == widget.projectId)
                 .firstOrNull;
             if (project == null) {
               return const Center(child: Text('找不到專案'));
             }
-            return _ProjectDetail(
+            content = _ProjectDetail(
               project: project,
               tasks: taskItems,
               projects: items,
+              onEditProject: (project) =>
+                  setState(() => _editingProjectId = project.id),
+              onEditTask: (task) => setState(() => _editingTaskId = task.id),
+            );
+          } else {
+            content = _ProjectList(
+              projects: items,
+              tasks: taskItems,
+              onEditProject: (project) =>
+                  setState(() => _editingProjectId = project.id),
             );
           }
-          return _ProjectList(projects: items, tasks: taskItems);
+
+          return Stack(
+            children: [
+              content,
+              if (editingProject != null)
+                ProjectEditPanel(
+                  project: editingProject,
+                  onClose: () => setState(() => _editingProjectId = null),
+                ),
+              if (editingTask != null)
+                TaskEditPanel(
+                  task: editingTask,
+                  projects: items,
+                  onClose: () => setState(() => _editingTaskId = null),
+                ),
+            ],
+          );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => Center(child: Text('任務載入失敗：$error')),
@@ -45,10 +91,15 @@ class ProjectsScreen extends ConsumerWidget {
 }
 
 class _ProjectList extends ConsumerWidget {
-  const _ProjectList({required this.projects, required this.tasks});
+  const _ProjectList({
+    required this.projects,
+    required this.tasks,
+    required this.onEditProject,
+  });
 
   final List<Project> projects;
   final List<Task> tasks;
+  final void Function(Project project) onEditProject;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -83,6 +134,7 @@ class _ProjectList extends ConsumerWidget {
                       task.status != TaskStatus.done.name,
                 )
                 .length,
+            onEdit: () => onEditProject(project),
           ),
           const SizedBox(height: 12),
         ],
@@ -123,10 +175,15 @@ class _ProjectList extends ConsumerWidget {
 }
 
 class _ProjectCard extends StatelessWidget {
-  const _ProjectCard({required this.project, required this.openTasks});
+  const _ProjectCard({
+    required this.project,
+    required this.openTasks,
+    required this.onEdit,
+  });
 
   final Project project;
   final int openTasks;
+  final VoidCallback onEdit;
 
   @override
   Widget build(BuildContext context) {
@@ -165,6 +222,12 @@ class _ProjectCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       _StatusBadge(status: project.status),
+                      IconButton(
+                        key: ValueKey('project-edit-${project.id}'),
+                        tooltip: '編輯專案',
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                      ),
                     ],
                   ),
                   if (project.description != null) ...[
@@ -221,11 +284,15 @@ class _ProjectDetail extends ConsumerWidget {
     required this.project,
     required this.tasks,
     required this.projects,
+    required this.onEditProject,
+    required this.onEditTask,
   });
 
   final Project project;
   final List<Task> tasks;
   final List<Project> projects;
+  final void Function(Project project) onEditProject;
+  final void Function(Task task) onEditTask;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -275,6 +342,12 @@ class _ProjectDetail extends ConsumerWidget {
                       ),
                       const SizedBox(width: 10),
                       _StatusBadge(status: project.status),
+                      IconButton(
+                        key: ValueKey('project-edit-${project.id}'),
+                        tooltip: '編輯專案',
+                        onPressed: () => onEditProject(project),
+                        icon: const Icon(Icons.edit_outlined, size: 18),
+                      ),
                     ],
                   ),
                   if (project.description != null)
@@ -299,6 +372,7 @@ class _ProjectDetail extends ConsumerWidget {
                   task.id,
                   done ? TaskStatus.done : TaskStatus.todo,
                 ),
+            onEdit: () => onEditTask(task),
           ),
         if (doneTasks.isNotEmpty) ...[
           const SizedBox(height: 20),
@@ -313,6 +387,7 @@ class _ProjectDetail extends ConsumerWidget {
                     task.id,
                     done ? TaskStatus.done : TaskStatus.todo,
                   ),
+              onEdit: () => onEditTask(task),
             ),
         ],
       ],
